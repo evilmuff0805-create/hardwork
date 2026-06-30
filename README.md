@@ -2,6 +2,11 @@
 
 A Next.js app configured with Supabase Auth and protected routes.
 
+<<<<<<< codex/set-up-supabase-auth-and-routes-o1zsvg
+For ongoing handoff notes, completed setup, and next-step guidance, see `PROJECT_STATUS.md`. For local and CI verification guidance, see `TESTING.md`.
+
+=======
+>>>>>>> main
 ## Setup
 
 1. Copy `.env.example` to `.env.local`.
@@ -9,6 +14,16 @@ A Next.js app configured with Supabase Auth and protected routes.
 3. Optionally set `NEXT_PUBLIC_SITE_URL` to your deployed site URL so magic links redirect correctly outside local development.
 4. In Supabase Auth URL Configuration, add `http://localhost:3000/auth/callback` and your production callback URL as allowed redirect URLs.
 
+<<<<<<< codex/set-up-supabase-auth-and-routes-o1zsvg
+
+## Todo table setup
+
+Before using `/protected` as a todo list, open your Supabase project SQL editor and run `supabase/migrations/001_create_todos.sql`.
+
+The SQL creates a `todos` table, enables Row Level Security, and adds policies so each signed-in user can only read and modify their own todos.
+
+=======
+>>>>>>> main
 ## Supabase MCP login
 
 If you are using the Codex Supabase MCP integration, authenticate it before asking Codex to inspect or mutate your Supabase project:

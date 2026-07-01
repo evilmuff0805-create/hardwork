@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 import { signOut } from "../login/actions";
-<<<<<<< codex/set-up-supabase-auth-and-routes-o1zsvg
 import { addTodo, deleteTodo, toggleTodo } from "./actions";
 
 type Todo = {
@@ -14,16 +13,11 @@ type Todo = {
 export default async function ProtectedPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const errorMessage = typeof params.error === "string" ? params.error : undefined;
-=======
-
-export default async function ProtectedPage() {
->>>>>>> main
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?next=/protected");
 
-<<<<<<< codex/set-up-supabase-auth-and-routes-o1zsvg
   const { data: todos, error } = await supabase
     .from("todos")
     .select("id,title,is_complete,inserted_at")
@@ -74,16 +68,6 @@ export default async function ProtectedPage() {
         </ul>
 
         {!error && (todos ?? []).length === 0 ? <p className="empty-state">No todos yet. Add your first task above.</p> : null}
-=======
-  return (
-    <main>
-      <section className="card">
-        <h1>Protected route</h1>
-        <p>You are signed in as {user.email ?? user.id}.</p>
-        <form action={signOut}>
-          <button type="submit">Sign out</button>
-        </form>
->>>>>>> main
       </section>
     </main>
   );

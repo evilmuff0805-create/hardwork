@@ -38,8 +38,6 @@ button {
 }
 
 form { display: grid; gap: 1rem; }
-<<<<<<< codex/set-up-supabase-auth-and-routes-o1zsvg
-
 
 .page-header {
   align-items: center;
@@ -121,5 +119,3 @@ form { display: grid; gap: 1rem; }
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
 }
-=======
->>>>>>> main

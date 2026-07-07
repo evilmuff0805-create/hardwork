@@ -1,64 +1,154 @@
 :root {
-  color-scheme: light dark;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #08111f;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: #0f172a;
-  color: #e2e8f0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 34rem),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 30rem),
+    linear-gradient(135deg, #08111f 0%, #0f172a 52%, #111827 100%);
+  color: #f8fafc;
 }
 
-a { color: #93c5fd; }
-
-main {
-  margin: 0 auto;
-  max-width: 760px;
-  padding: 4rem 1.5rem;
-}
-
-.card {
-  background: rgba(15, 23, 42, 0.86);
-  border: 1px solid rgba(148, 163, 184, 0.28);
+button,
+input,
+select {
   border-radius: 1rem;
-  padding: 2rem;
-}
-
-button, input {
-  border-radius: 0.5rem;
-  border: 1px solid #475569;
+  border: 1px solid rgba(148, 163, 184, 0.24);
   font: inherit;
-  padding: 0.75rem 1rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
 }
 
-button {
-  background: #2563eb;
-  color: white;
+button,
+select {
   cursor: pointer;
 }
 
-form { display: grid; gap: 1rem; }
+button {
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  border: 0;
+  color: white;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.22);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+input,
+select {
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16);
+}
+
+input::placeholder {
+  color: #64748b;
+}
+
+main {
+  margin: 0 auto;
+  max-width: 980px;
+  padding: 6rem 1.25rem;
+}
+
+.card {
+  background: rgba(15, 23, 42, 0.74);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 2rem;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+  padding: clamp(1.25rem, 4vw, 2.75rem);
+  backdrop-filter: blur(18px);
+}
+
+form {
+  display: grid;
+  gap: 1rem;
+}
 
 .page-header {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
   margin-bottom: 2rem;
 }
 
+.hero-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  padding-bottom: 1.75rem;
+}
+
 .eyebrow {
-  color: #94a3b8;
+  color: #93c5fd;
   font-size: 0.9rem;
-  margin: 0 0 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.65rem;
+  text-transform: uppercase;
 }
 
 .todo-card h1 {
+  font-size: clamp(2.25rem, 7vw, 4.75rem);
+  letter-spacing: -0.07em;
+  line-height: 0.94;
   margin: 0;
 }
 
+.hero-copy {
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin: 1rem 0 0;
+}
+
 .todo-form {
+  background: rgba(2, 6, 23, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 1.4rem;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.form-title-row {
+  align-items: baseline;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.todo-form label {
+  font-weight: 800;
+}
+
+.voice-hint {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0;
+  text-align: right;
 }
 
 .inline-form-row {
@@ -67,28 +157,79 @@ form { display: grid; gap: 1rem; }
   grid-template-columns: 1fr auto;
 }
 
-.secondary-button {
-  background: #334155;
+.inline-form-row.enhanced {
+  grid-template-columns: 8.5rem 1fr auto auto;
+}
+
+.voice-button {
+  background: rgba(30, 41, 59, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: none;
 }
 
 .danger-button {
-  background: #be123c;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.24);
+  box-shadow: none;
+  color: #fecdd3;
+  min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
+}
+
+.todo-sections {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.todo-section {
+  background: rgba(15, 23, 42, 0.46);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 1.35rem;
+  padding: 1rem;
+}
+
+.section-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.section-heading h2 {
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.section-heading span {
+  align-items: center;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 999px;
+  color: #bfdbfe;
+  display: inline-flex;
+  font-size: 0.85rem;
+  font-weight: 800;
+  height: 1.7rem;
+  justify-content: center;
+  min-width: 1.7rem;
+  padding: 0 0.55rem;
 }
 
 .todo-list {
   display: grid;
   gap: 0.75rem;
   list-style: none;
-  margin: 1.5rem 0 0;
+  margin: 0;
   padding: 0;
 }
 
 .todo-item {
   align-items: center;
   background: rgba(30, 41, 59, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 1rem;
   display: grid;
   gap: 0.75rem;
   grid-template-columns: auto 1fr auto;
@@ -96,11 +237,18 @@ form { display: grid; gap: 1rem; }
 }
 
 .check-button {
-  background: transparent;
-  border-color: #64748b;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  box-shadow: none;
   color: #bfdbfe;
+  min-height: 2.75rem;
   min-width: 2.75rem;
   padding: 0.5rem;
+}
+
+.todo-title {
+  color: #f8fafc;
+  overflow-wrap: anywhere;
 }
 
 .todo-title.complete {
@@ -113,9 +261,45 @@ form { display: grid; gap: 1rem; }
   color: #cbd5e1;
 }
 
+.empty-state.compact {
+  color: #64748b;
+  margin: 0;
+}
+
 .error-message {
   background: rgba(190, 18, 60, 0.16);
   border: 1px solid rgba(244, 63, 94, 0.4);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
+}
+
+@media (max-width: 760px) {
+  main {
+    padding: 1rem;
+  }
+
+  .card {
+    border-radius: 1.4rem;
+    min-height: calc(100vh - 2rem);
+  }
+
+  .page-header,
+  .form-title-row {
+    display: grid;
+  }
+
+  .voice-hint {
+    text-align: left;
+  }
+
+  .inline-form-row,
+  .inline-form-row.enhanced {
+    grid-template-columns: 1fr;
+  }
+
+  button,
+  input,
+  select {
+    width: 100%;
+  }
 }

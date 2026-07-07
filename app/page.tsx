@@ -1,3 +1,4 @@
+import { TodoForm } from "./components/todo-form";
 import { createClient } from "../lib/supabase/server";
 import { addTodo, deleteTodo, toggleTodo } from "./protected/actions";
 
@@ -6,7 +7,14 @@ type Todo = {
   title: string;
   is_complete: boolean;
   inserted_at: string;
+  due_bucket: "today" | "tomorrow" | "week";
 };
+
+const sections = [
+  { key: "today", label: "오늘" },
+  { key: "tomorrow", label: "내일" },
+  { key: "week", label: "이번 주" },
+] as const;
 
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
@@ -14,51 +22,67 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const supabase = await createClient();
   const { data: todos, error } = await supabase
     .from("todos")
-    .select("id,title,is_complete,inserted_at")
+    .select("id,title,is_complete,inserted_at,due_bucket")
     .order("inserted_at", { ascending: false })
     .returns<Todo[]>();
+
+  const todoList = todos ?? [];
 
   return (
     <main>
       <section className="card todo-card">
-        <div className="page-header">
+        <div className="page-header hero-header">
           <div>
-            <p className="eyebrow">Cloud todo list</p>
-            <h1>My todos</h1>
+            <p className="eyebrow">Personal cloud planner</p>
+            <h1>오늘부터 볼 일</h1>
+            <p className="hero-copy">말로 추가하고, 오늘 · 내일 · 이번 주 순서로 바로 확인해요.</p>
           </div>
         </div>
 
-        <form className="todo-form" action={addTodo}>
-          <label htmlFor="title">New todo</label>
-          <div className="inline-form-row">
-            <input id="title" name="title" type="text" required maxLength={160} placeholder="Add a task..." />
-            <button type="submit">Add</button>
-          </div>
-        </form>
+        <TodoForm action={addTodo} />
 
         {errorMessage ? <p role="alert" className="error-message">{errorMessage}</p> : null}
-        {error ? <p role="alert" className="error-message">Run the public todo SQL first: {error.message}</p> : null}
+        {error ? <p role="alert" className="error-message">Run the latest public todo SQL first: {error.message}</p> : null}
 
-        <ul className="todo-list">
-          {(todos ?? []).map((todo) => (
-            <li className="todo-item" key={todo.id}>
-              <form action={toggleTodo}>
-                <input type="hidden" name="id" value={todo.id} />
-                <input type="hidden" name="is_complete" value={String(todo.is_complete)} />
-                <button className="check-button" type="submit" aria-label={todo.is_complete ? "Mark incomplete" : "Mark complete"}>
-                  {todo.is_complete ? "✓" : "○"}
-                </button>
-              </form>
-              <span className={todo.is_complete ? "todo-title complete" : "todo-title"}>{todo.title}</span>
-              <form action={deleteTodo}>
-                <input type="hidden" name="id" value={todo.id} />
-                <button className="danger-button" type="submit">Delete</button>
-              </form>
-            </li>
-          ))}
-        </ul>
+        <div className="todo-sections">
+          {sections.map((section) => {
+            const sectionTodos = todoList.filter((todo) => (todo.due_bucket ?? "today") === section.key);
 
-        {!error && (todos ?? []).length === 0 ? <p className="empty-state">No todos yet. Add your first task above.</p> : null}
+            return (
+              <section className="todo-section" key={section.key}>
+                <div className="section-heading">
+                  <h2>{section.label}</h2>
+                  <span>{sectionTodos.length}</span>
+                </div>
+
+                {sectionTodos.length > 0 ? (
+                  <ul className="todo-list">
+                    {sectionTodos.map((todo) => (
+                      <li className="todo-item" key={todo.id}>
+                        <form action={toggleTodo}>
+                          <input type="hidden" name="id" value={todo.id} />
+                          <input type="hidden" name="is_complete" value={String(todo.is_complete)} />
+                          <button className="check-button" type="submit" aria-label={todo.is_complete ? "Mark incomplete" : "Mark complete"}>
+                            {todo.is_complete ? "✓" : "○"}
+                          </button>
+                        </form>
+
+                        <span className={todo.is_complete ? "todo-title complete" : "todo-title"}>{todo.title}</span>
+
+                        <form action={deleteTodo}>
+                          <input type="hidden" name="id" value={todo.id} />
+                          <button className="danger-button" type="submit">Delete</button>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-state compact">아직 없어요.</p>
+                )}
+              </section>
+            );
+          })}
+        </div>
       </section>
     </main>
   );

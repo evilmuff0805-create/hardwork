@@ -12,10 +12,12 @@ function redirectWithError(message: string) {
 
 export async function addTodo(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
+  const dueBucket = String(formData.get("due_bucket") ?? "today");
+  const safeDueBucket = ["today", "tomorrow", "week"].includes(dueBucket) ? dueBucket : "today";
   if (!title) return;
 
   const supabase = await createClient();
-  const { error } = await supabase.from("todos").insert({ title });
+  const { error } = await supabase.from("todos").insert({ title, due_bucket: safeDueBucket });
 
   if (error) redirectWithError(error.message);
   revalidatePath(todoPath);

@@ -1,5 +1,16 @@
 # Project status and next steps
 
+## Current direction update: no-login Railway app
+
+The user clarified that this is a personal cloud app, not a local-only app, and they do not want login or even a password. The correct direction is now:
+
+- Deployment: Railway
+- Database: Supabase
+- Auth: disabled/unused for the todo app
+- Access model: anyone with the Railway URL can use the single shared todo list
+- Next required Supabase step: run `supabase/migrations/002_make_todos_public_personal.sql` in Supabase SQL Editor
+
+Reason: the previous Supabase magic-link auth flow created too much setup friction for a personal todo app. Prioritize a working cloud app over formal user accounts.
 This file is the handoff note for future chats. Keep it updated so the next assistant remembers what has already been done and what to do next, even if the chat is compressed.
 
 ## Highest-priority working rule
@@ -168,3 +179,4 @@ C:\Users\Rootho\Desktop\hardwork
 ```
 
 - Do not tell the user to run npm commands from `C:\Windows\System32`.
+

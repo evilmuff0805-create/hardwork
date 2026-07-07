@@ -4,24 +4,21 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 
-async function getCurrentUserId() {
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+const todoPath = "/";
 
-  if (error || !user) redirect("/login?next=/protected");
-
-  return { supabase, userId: user.id };
+function redirectWithError(message: string) {
+  redirect(`${todoPath}?error=${encodeURIComponent(message)}`);
 }
 
 export async function addTodo(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   if (!title) return;
 
-  const { supabase, userId } = await getCurrentUserId();
-  const { error } = await supabase.from("todos").insert({ title, user_id: userId });
+  const supabase = await createClient();
+  const { error } = await supabase.from("todos").insert({ title });
 
-  if (error) redirect(`/protected?error=${encodeURIComponent(error.message)}`);
-  revalidatePath("/protected");
+  if (error) redirectWithError(error.message);
+  revalidatePath(todoPath);
 }
 
 export async function toggleTodo(formData: FormData) {
@@ -29,24 +26,20 @@ export async function toggleTodo(formData: FormData) {
   const isComplete = String(formData.get("is_complete") ?? "false") === "true";
   if (!id) return;
 
-  const { supabase, userId } = await getCurrentUserId();
-  const { error } = await supabase
-    .from("todos")
-    .update({ is_complete: !isComplete })
-    .eq("id", id)
-    .eq("user_id", userId);
+  const supabase = await createClient();
+  const { error } = await supabase.from("todos").update({ is_complete: !isComplete }).eq("id", id);
 
-  if (error) redirect(`/protected?error=${encodeURIComponent(error.message)}`);
-  revalidatePath("/protected");
+  if (error) redirectWithError(error.message);
+  revalidatePath(todoPath);
 }
 
 export async function deleteTodo(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  const { supabase, userId } = await getCurrentUserId();
-  const { error } = await supabase.from("todos").delete().eq("id", id).eq("user_id", userId);
+  const supabase = await createClient();
+  const { error } = await supabase.from("todos").delete().eq("id", id);
 
-  if (error) redirect(`/protected?error=${encodeURIComponent(error.message)}`);
-  revalidatePath("/protected");
+  if (error) redirectWithError(error.message);
+  revalidatePath(todoPath);
 }

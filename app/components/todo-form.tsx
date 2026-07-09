@@ -27,36 +27,90 @@ type TodoFormProps = {
   action: (formData: FormData) => void | Promise<void>;
 };
 
-const bucketLabels = {
-  today: "오늘",
-  tomorrow: "내일",
-  week: "이번 주",
-} as const;
+type ParsedSchedule = {
+  dueDate: string;
+  title: string;
+  message: string;
+};
 
-type Bucket = keyof typeof bucketLabels;
+const dayNames = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
-function inferBucket(transcript: string): { bucket: Bucket; title: string } {
+const weekdayPatterns = [
+  { day: 0, pattern: /일요일|일욜/g },
+  { day: 1, pattern: /월요일|월욜/g },
+  { day: 2, pattern: /화요일|화욜/g },
+  { day: 3, pattern: /수요일|수욜/g },
+  { day: 4, pattern: /목요일|목욜/g },
+  { day: 5, pattern: /금요일|금욜/g },
+  { day: 6, pattern: /토요일|토욜/g },
+];
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function nextWeekdayDate(today: Date, targetDay: number) {
+  const currentDay = today.getDay();
+  const daysUntilTarget = (targetDay - currentDay + 7) % 7 || 7;
+  return addDays(today, daysUntilTarget);
+}
+
+function stripScheduleWords(title: string, pattern: RegExp) {
+  return title.replace(pattern, "").replace(/에\s*/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function parseSchedule(transcript: string): ParsedSchedule {
+  const today = new Date();
   const normalized = transcript.trim();
 
-  if (/이번\s*주|이번주|주중|주말/.test(normalized)) {
-    return { bucket: "week", title: normalized.replace(/이번\s*주|이번주|주중|주말/g, "").trim() || normalized };
+  if (/모레/.test(normalized)) {
+    const dueDate = addDays(today, 2);
+    return { dueDate: toDateInputValue(dueDate), title: stripScheduleWords(normalized, /모레/g) || normalized, message: "모레" };
   }
 
   if (/내일/.test(normalized)) {
-    return { bucket: "tomorrow", title: normalized.replace(/내일/g, "").trim() || normalized };
+    const dueDate = addDays(today, 1);
+    return { dueDate: toDateInputValue(dueDate), title: stripScheduleWords(normalized, /내일/g) || normalized, message: "내일" };
   }
 
   if (/오늘/.test(normalized)) {
-    return { bucket: "today", title: normalized.replace(/오늘/g, "").trim() || normalized };
+    return { dueDate: toDateInputValue(today), title: stripScheduleWords(normalized, /오늘/g) || normalized, message: "오늘" };
   }
 
-  return { bucket: "today", title: normalized };
+  for (const weekday of weekdayPatterns) {
+    if (weekday.pattern.test(normalized)) {
+      weekday.pattern.lastIndex = 0;
+      const dueDate = nextWeekdayDate(today, weekday.day);
+      return {
+        dueDate: toDateInputValue(dueDate),
+        title: stripScheduleWords(normalized, weekday.pattern) || normalized,
+        message: `${dayNames[weekday.day]}요일`,
+      };
+    }
+  }
+
+  return { dueDate: toDateInputValue(today), title: normalized, message: "오늘" };
+}
+
+function formatDateLabel(dateValue: string) {
+  const date = new Date(`${dateValue}T00:00:00`);
+  return `${date.getMonth() + 1}/${date.getDate()} (${dayNames[date.getDay()]})`;
 }
 
 export function TodoForm({ action }: TodoFormProps) {
+  const initialDueDate = useMemo(() => toDateInputValue(new Date()), []);
   const [title, setTitle] = useState("");
-  const [bucket, setBucket] = useState<Bucket>("today");
-  const [voiceMessage, setVoiceMessage] = useState("모바일에서는 마이크 버튼으로 말해서 추가할 수 있어요.");
+  const [dueDate, setDueDate] = useState(initialDueDate);
+  const [voiceMessage, setVoiceMessage] = useState("말하기 버튼으로 ‘금요일에 점심 식사’처럼 추가할 수 있어요.");
   const [isListening, setIsListening] = useState(false);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
@@ -81,14 +135,14 @@ export function TodoForm({ action }: TodoFormProps) {
     recognition.continuous = false;
     recognition.interimResults = false;
     setIsListening(true);
-    setVoiceMessage("듣고 있어요. 예: ‘내일 병원 예약’처럼 말해 주세요.");
+    setVoiceMessage("듣고 있어요. 예: ‘금요일에 점심 식사’처럼 말해 주세요.");
 
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript ?? "";
-      const parsed = inferBucket(transcript);
-      setBucket(parsed.bucket);
+      const parsed = parseSchedule(transcript);
+      setDueDate(parsed.dueDate);
       setTitle(parsed.title);
-      setVoiceMessage(`인식됨: ${bucketLabels[parsed.bucket]} · ${parsed.title}`);
+      setVoiceMessage(`인식됨: ${parsed.message} · ${parsed.title}`);
     };
 
     recognition.onerror = () => {
@@ -107,24 +161,23 @@ export function TodoForm({ action }: TodoFormProps) {
     startTransition(async () => {
       await action(formData);
       setTitle("");
+      setDueDate(initialDueDate);
       formRef.current?.reset();
-      setBucket("today");
     });
   }
 
   return (
     <form ref={formRef} className="todo-form" action={handleSubmit}>
       <div className="form-title-row">
-        <label htmlFor="title">New todo</label>
+        <label htmlFor="title">새 할 일</label>
         <p className="voice-hint">{voiceMessage}</p>
       </div>
 
       <div className="inline-form-row enhanced">
-        <select aria-label="When" name="due_bucket" value={bucket} onChange={(event) => setBucket(event.target.value as Bucket)}>
-          <option value="today">오늘</option>
-          <option value="tomorrow">내일</option>
-          <option value="week">이번 주</option>
-        </select>
+        <label className="date-pill" htmlFor="due_date">
+          <span>날짜</span>
+          <input id="due_date" name="due_date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+        </label>
 
         <input
           id="title"
@@ -132,7 +185,7 @@ export function TodoForm({ action }: TodoFormProps) {
           type="text"
           required
           maxLength={160}
-          placeholder="Add a task..."
+          placeholder="예: 금요일에 점심 식사"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
@@ -141,8 +194,10 @@ export function TodoForm({ action }: TodoFormProps) {
           {isListening ? "듣는 중" : "말하기"}
         </button>
 
-        <button type="submit" disabled={isPending}>{isPending ? "Adding" : "Add"}</button>
+        <button type="submit" disabled={isPending}>{isPending ? "추가 중" : "추가"}</button>
       </div>
+
+      <p className="selected-date">선택된 날짜: {formatDateLabel(dueDate)}</p>
     </form>
   );
 }

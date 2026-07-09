@@ -5,19 +5,29 @@ import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 
 const todoPath = "/";
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 function redirectWithError(message: string) {
   redirect(`${todoPath}?error=${encodeURIComponent(message)}`);
 }
 
+function todayDateValue() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 export async function addTodo(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
-  const dueBucket = String(formData.get("due_bucket") ?? "today");
-  const safeDueBucket = ["today", "tomorrow", "week"].includes(dueBucket) ? dueBucket : "today";
+  const dueDate = String(formData.get("due_date") ?? "");
+  const safeDueDate = datePattern.test(dueDate) ? dueDate : todayDateValue();
   if (!title) return;
 
   const supabase = await createClient();
-  const { error } = await supabase.from("todos").insert({ title, due_bucket: safeDueBucket });
+  const { error } = await supabase.from("todos").insert({ title, due_date: safeDueDate });
 
   if (error) redirectWithError(error.message);
   revalidatePath(todoPath);

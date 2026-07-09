@@ -79,8 +79,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <div className="page-header hero-header">
           <div>
             <p className="eyebrow">Neon cloud planner</p>
-            <h1>오늘부터 한눈에</h1>
-            <p className="hero-copy">“금요일에 점심 식사”처럼 말하면 날짜를 알아듣고, 시간이 지나면 오늘 · 내일 · 이번 주로 자동 재정렬돼요.</p>
+            <h1>Planner</h1>
           </div>
         </div>
 
@@ -138,3 +137,4 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     </main>
   );
 }
+

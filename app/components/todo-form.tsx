@@ -115,11 +115,6 @@ export function TodoForm({ action }: TodoFormProps) {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
-  const isSpeechSupported = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const speechWindow = window as SpeechWindow;
-    return Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition);
-  }, []);
 
   function startVoiceInput() {
     const speechWindow = window as SpeechWindow;
@@ -190,7 +185,7 @@ export function TodoForm({ action }: TodoFormProps) {
           onChange={(event) => setTitle(event.target.value)}
         />
 
-        <button className="voice-button" type="button" onClick={startVoiceInput} disabled={isListening || !isSpeechSupported}>
+        <button className="voice-button" type="button" onClick={startVoiceInput} disabled={isListening}>
           {isListening ? "듣는 중" : "말하기"}
         </button>
 
@@ -201,3 +196,4 @@ export function TodoForm({ action }: TodoFormProps) {
     </form>
   );
 }
+

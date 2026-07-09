@@ -10,12 +10,13 @@ type Todo = {
   due_date: string | null;
 };
 
-type SectionKey = "today" | "tomorrow" | "week" | "later";
+type SectionKey = "today" | "tomorrow" | "week" | "pastWeek" | "later";
 
 const sections: Array<{ key: SectionKey; label: string; helper: string }> = [
   { key: "today", label: "오늘", helper: "지금 바로 볼 일" },
   { key: "tomorrow", label: "내일", helper: "하루 뒤 자동 이동" },
   { key: "week", label: "이번 주", helper: "이번 주 안에 할 일" },
+  { key: "pastWeek", label: "지난 주", helper: "최근 7일 동안 지나간 일" },
   { key: "later", label: "나중", helper: "이번 주 이후" },
 ];
 
@@ -41,11 +42,12 @@ function endOfWeekDateValue(date: Date) {
   return seoulDateValue(addDays(date, daysUntilSunday));
 }
 
-function getSectionKey(dueDate: string | null, today: string, tomorrow: string, weekEnd: string): SectionKey {
+function getSectionKey(dueDate: string | null, today: string, tomorrow: string, weekEnd: string, pastWeekStart: string): SectionKey {
   const normalizedDueDate = dueDate ?? today;
-  if (normalizedDueDate <= today) return "today";
+  if (normalizedDueDate === today) return "today";
   if (normalizedDueDate === tomorrow) return "tomorrow";
-  if (normalizedDueDate <= weekEnd) return "week";
+  if (normalizedDueDate > tomorrow && normalizedDueDate <= weekEnd) return "week";
+  if (normalizedDueDate < today && normalizedDueDate >= pastWeekStart) return "pastWeek";
   return "later";
 }
 
@@ -63,6 +65,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const today = seoulDateValue(now);
   const tomorrow = seoulDateValue(addDays(now, 1));
   const weekEnd = endOfWeekDateValue(now);
+  const pastWeekStart = seoulDateValue(addDays(now, -7));
   const supabase = await createClient();
   const { data: todos, error } = await supabase
     .from("todos")
@@ -90,7 +93,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
         <div className="todo-sections">
           {sections.map((section) => {
-            const sectionTodos = todoList.filter((todo) => getSectionKey(todo.due_date, today, tomorrow, weekEnd) === section.key);
+            const sectionTodos = todoList.filter((todo) => getSectionKey(todo.due_date, today, tomorrow, weekEnd, pastWeekStart) === section.key);
 
             return (
               <section className="todo-section" key={section.key}>
@@ -137,4 +140,5 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     </main>
   );
 }
+
 

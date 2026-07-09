@@ -10,14 +10,15 @@ type Todo = {
   due_date: string | null;
 };
 
-type SectionKey = "today" | "tomorrow" | "week" | "pastWeek" | "later";
+type SectionKey = "today" | "tomorrow" | "week" | "overdue" | "completedPast" | "later";
 
 const sections: Array<{ key: SectionKey; label: string; helper: string }> = [
   { key: "today", label: "오늘", helper: "지금 바로 볼 일" },
   { key: "tomorrow", label: "내일", helper: "하루 뒤 자동 이동" },
   { key: "week", label: "이번 주", helper: "이번 주 안에 할 일" },
-  { key: "pastWeek", label: "지난 주", helper: "최근 7일 동안 지나간 일" },
-  { key: "later", label: "나중", helper: "이번 주 이후" },
+  { key: "overdue", label: "밀린 일", helper: "지난 일정 중 아직 안 끝낸 일" },
+  { key: "completedPast", label: "지난 주 완료", helper: "지난 일정 중 체크한 일" },
+  { key: "later", label: "나중", helper: "이번 주 이후 미래 일정" },
 ];
 
 function seoulDateValue(date: Date) {
@@ -42,12 +43,12 @@ function endOfWeekDateValue(date: Date) {
   return seoulDateValue(addDays(date, daysUntilSunday));
 }
 
-function getSectionKey(dueDate: string | null, today: string, tomorrow: string, weekEnd: string, pastWeekStart: string): SectionKey {
-  const normalizedDueDate = dueDate ?? today;
+function getSectionKey(todo: Todo, today: string, tomorrow: string, weekEnd: string): SectionKey {
+  const normalizedDueDate = todo.due_date ?? today;
+  if (normalizedDueDate < today) return todo.is_complete ? "completedPast" : "overdue";
   if (normalizedDueDate === today) return "today";
   if (normalizedDueDate === tomorrow) return "tomorrow";
   if (normalizedDueDate > tomorrow && normalizedDueDate <= weekEnd) return "week";
-  if (normalizedDueDate < today && normalizedDueDate >= pastWeekStart) return "pastWeek";
   return "later";
 }
 
@@ -65,7 +66,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const today = seoulDateValue(now);
   const tomorrow = seoulDateValue(addDays(now, 1));
   const weekEnd = endOfWeekDateValue(now);
-  const pastWeekStart = seoulDateValue(addDays(now, -7));
   const supabase = await createClient();
   const { data: todos, error } = await supabase
     .from("todos")
@@ -93,7 +93,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
         <div className="todo-sections">
           {sections.map((section) => {
-            const sectionTodos = todoList.filter((todo) => getSectionKey(todo.due_date, today, tomorrow, weekEnd, pastWeekStart) === section.key);
+            const sectionTodos = todoList.filter((todo) => getSectionKey(todo, today, tomorrow, weekEnd) === section.key);
 
             return (
               <section className="todo-section" key={section.key}>
@@ -140,5 +140,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     </main>
   );
 }
+
 
 

@@ -12,6 +12,8 @@ type Todo = {
 
 type SectionKey = "today" | "tomorrow" | "week" | "overdue" | "completedPast" | "later";
 
+type NoticeTodo = Todo & { formattedDate: string };
+
 const sections: Array<{ key: SectionKey; label: string; helper: string }> = [
   { key: "today", label: "오늘", helper: "지금 바로 볼 일" },
   { key: "tomorrow", label: "내일", helper: "하루 뒤 자동 이동" },
@@ -75,6 +77,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     .returns<Todo[]>();
 
   const todoList = todos ?? [];
+  const todayTodos = todoList.filter((todo) => getSectionKey(todo, today, tomorrow, weekEnd) === "today" && !todo.is_complete);
+  const tomorrowTodos: NoticeTodo[] = todoList
+    .filter((todo) => getSectionKey(todo, today, tomorrow, weekEnd) === "tomorrow" && !todo.is_complete)
+    .map((todo) => ({ ...todo, formattedDate: formatTodoDate(todo.due_date) }));
+  const overdueTodos = todoList.filter((todo) => getSectionKey(todo, today, tomorrow, weekEnd) === "overdue");
 
   return (
     <main>
@@ -87,6 +94,30 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         </div>
 
         <TodoForm action={addTodo} />
+
+        <section className="notice-panel" aria-label="내일 일정 알림">
+          <div>
+            <p className="notice-kicker">앱 안 알림</p>
+            <h2>내일 할 일 {tomorrowTodos.length}개</h2>
+            <p>모바일 푸시 전 단계로, 앱을 열면 내일 일정을 바로 보여줘요.</p>
+          </div>
+          {tomorrowTodos.length > 0 ? (
+            <ul>
+              {tomorrowTodos.slice(0, 3).map((todo) => (
+                <li key={todo.id}>
+                  <span>{todo.title}</span>
+                  <small>{todo.formattedDate}</small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="notice-empty">내일 예정된 미완료 일정이 없어요.</p>
+          )}
+          <div className="notice-stats">
+            <span>오늘 {todayTodos.length}</span>
+            <span>밀린 일 {overdueTodos.length}</span>
+          </div>
+        </section>
 
         {errorMessage ? <p role="alert" className="error-message">{errorMessage}</p> : null}
         {error ? <p role="alert" className="error-message">Run the latest public todo SQL first: {error.message}</p> : null}
@@ -140,6 +171,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     </main>
   );
 }
+
 
 
 

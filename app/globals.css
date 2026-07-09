@@ -185,6 +185,88 @@ form {
   padding: 0.5rem 0.75rem;
 }
 
+
+.notice-panel {
+  align-items: stretch;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(255, 46, 166, 0.16)),
+    rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(125, 249, 255, 0.28);
+  border-radius: 1.4rem;
+  box-shadow: 0 22px 54px rgba(0, 212, 255, 0.12);
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.15fr 1fr auto;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.notice-panel h2 {
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+  margin: 0.1rem 0 0.35rem;
+}
+
+.notice-panel p {
+  color: #eadcf5;
+  margin: 0;
+}
+
+.notice-kicker {
+  color: #7df9ff !important;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.notice-panel ul {
+  display: grid;
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notice-panel li {
+  align-items: center;
+  background: rgba(17, 7, 34, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.85rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+}
+
+.notice-panel li span {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.notice-panel li small,
+.notice-empty {
+  color: #7df9ff;
+  font-weight: 800;
+}
+
+.notice-stats {
+  align-content: center;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.notice-stats span {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #fff7ff;
+  font-size: 0.85rem;
+  font-weight: 900;
+  padding: 0.55rem 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+}
 .todo-sections {
   display: grid;
   gap: 1rem;
@@ -327,3 +409,4 @@ form {
     width: 100%;
   }
 }
+

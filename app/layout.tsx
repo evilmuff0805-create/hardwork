@@ -4,6 +4,9 @@ import type { Metadata, Viewport } from "next";
 export const metadata: Metadata = {
   title: "Planner",
   description: "No-login personal cloud planner",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {

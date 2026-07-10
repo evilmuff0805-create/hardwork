@@ -196,9 +196,13 @@ form {
   box-shadow: 0 22px 54px rgba(0, 212, 255, 0.12);
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1.15fr 1fr auto;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto;
   margin-bottom: 1.5rem;
   padding: 1rem;
+}
+
+.notice-panel > * {
+  min-width: 0;
 }
 
 .notice-panel h2 {
@@ -233,14 +237,15 @@ form {
   background: rgba(17, 7, 34, 0.46);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.85rem;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: space-between;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: minmax(0, 1fr) auto;
   padding: 0.65rem 0.75rem;
 }
 
 .notice-panel li span {
   font-weight: 800;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
@@ -381,6 +386,28 @@ form {
   padding: 0.75rem 1rem;
 }
 
+@media (max-width: 920px) {
+  .notice-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .notice-panel li {
+    grid-template-columns: 1fr;
+  }
+
+  .notice-panel li small {
+    justify-self: start;
+  }
+
+  .notice-panel h2 {
+    font-size: 1.65rem;
+  }
+
+  .notice-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   main {
     padding: 1rem;
@@ -409,4 +436,5 @@ form {
     width: 100%;
   }
 }
+
 

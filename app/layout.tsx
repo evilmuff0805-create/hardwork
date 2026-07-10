@@ -1,9 +1,14 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "Supabase Auth App",
-  description: "Next.js app with Supabase authentication and protected routes",
+  title: "Planner",
+  description: "No-login personal cloud planner",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

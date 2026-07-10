@@ -338,6 +338,11 @@ form {
   padding: 0.75rem;
 }
 
+.todo-item.complete {
+  background: rgba(127, 29, 29, 0.24);
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
 .check-button {
   background: rgba(255, 255, 255, 0.10);
   border: 1px solid rgba(125, 249, 255, 0.30);
@@ -346,6 +351,12 @@ form {
   min-height: 2.75rem;
   min-width: 2.75rem;
   padding: 0.5rem;
+}
+
+.check-button.checked {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(248, 113, 113, 0.44);
+  color: #ff5c7a;
 }
 
 .todo-copy {
@@ -359,8 +370,11 @@ form {
 }
 
 .todo-title.complete {
-  color: #9f8fb0;
+  color: #ff6b7a;
+  font-weight: 900;
   text-decoration: line-through;
+  text-decoration-color: rgba(255, 92, 122, 0.92);
+  text-decoration-thickness: 0.16em;
 }
 
 .todo-date {
@@ -436,6 +450,7 @@ form {
     width: 100%;
   }
 }
+
 
 
 

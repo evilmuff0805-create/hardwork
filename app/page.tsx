@@ -139,11 +139,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                 {sectionTodos.length > 0 ? (
                   <ul className="todo-list">
                     {sectionTodos.map((todo) => (
-                      <li className="todo-item" key={todo.id}>
+                      <li className={todo.is_complete ? "todo-item complete" : "todo-item"} key={todo.id}>
                         <form action={toggleTodo}>
                           <input type="hidden" name="id" value={todo.id} />
                           <input type="hidden" name="is_complete" value={String(todo.is_complete)} />
-                          <button className="check-button" type="submit" aria-label={todo.is_complete ? "Mark incomplete" : "Mark complete"}>
+                          <button className={todo.is_complete ? "check-button checked" : "check-button"} type="submit" aria-label={todo.is_complete ? "Mark incomplete" : "Mark complete"}>
                             {todo.is_complete ? "✓" : "○"}
                           </button>
                         </form>
@@ -171,6 +171,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     </main>
   );
 }
+
 
 
 

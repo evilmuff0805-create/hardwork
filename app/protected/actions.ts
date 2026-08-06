@@ -11,6 +11,10 @@ function redirectWithError(message: string) {
   redirect(`${todoPath}?error=${encodeURIComponent(message)}`);
 }
 
+function redirectWithNotice(message: string) {
+  redirect(`${todoPath}?notice=${encodeURIComponent(message)}`);
+}
+
 function todayDateValue() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -54,4 +58,22 @@ export async function deleteTodo(formData: FormData) {
 
   if (error) redirectWithError(error.message);
   revalidatePath(todoPath);
+}
+
+// Deletes exactly what the "지난 주 완료" section shows: completed todos whose
+// due date is before today in Asia/Seoul. Todos without a due date are treated
+// as today by the UI, so they are excluded here too.
+export async function clearPastCompletedTodos() {
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("todos")
+    .delete({ count: "exact" })
+    .eq("is_complete", true)
+    .not("due_date", "is", null)
+    .lt("due_date", todayDateValue());
+
+  if (error) redirectWithError(error.message);
+
+  revalidatePath(todoPath);
+  redirectWithNotice(`지난 완료 ${count ?? 0}개를 지웠어요.`);
 }

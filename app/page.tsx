@@ -1,6 +1,7 @@
+import { ClearCompletedButton } from "./components/clear-completed-button";
 import { TodoForm } from "./components/todo-form";
 import { createClient } from "../lib/supabase/server";
-import { addTodo, deleteTodo, toggleTodo } from "./protected/actions";
+import { addTodo, clearPastCompletedTodos, deleteTodo, toggleTodo } from "./protected/actions";
 
 type Todo = {
   id: string;
@@ -64,6 +65,7 @@ function formatTodoDate(dueDate: string | null) {
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const errorMessage = typeof params.error === "string" ? params.error : undefined;
+  const noticeMessage = typeof params.notice === "string" ? params.notice : undefined;
   const now = new Date();
   const today = seoulDateValue(now);
   const tomorrow = seoulDateValue(addDays(now, 1));
@@ -119,6 +121,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
           </div>
         </section>
 
+        {noticeMessage ? <p role="status" className="notice-message">{noticeMessage}</p> : null}
         {errorMessage ? <p role="alert" className="error-message">{errorMessage}</p> : null}
         {error ? <p role="alert" className="error-message">Run the latest public todo SQL first: {error.message}</p> : null}
 
@@ -133,7 +136,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
                     <h2>{section.label}</h2>
                     <p>{section.helper}</p>
                   </div>
-                  <span>{sectionTodos.length}</span>
+                  <div className="section-heading-actions">
+                    <span>{sectionTodos.length}</span>
+                    {section.key === "completedPast" && sectionTodos.length > 0 ? (
+                      <ClearCompletedButton action={clearPastCompletedTodos} count={sectionTodos.length} />
+                    ) : null}
+                  </div>
                 </div>
 
                 {sectionTodos.length > 0 ? (

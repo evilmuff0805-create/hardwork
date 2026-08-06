@@ -400,6 +400,63 @@ form {
   padding: 0.75rem 1rem;
 }
 
+.notice-message {
+  background: rgba(0, 212, 255, 0.14);
+  border: 1px solid rgba(125, 249, 255, 0.38);
+  border-radius: 0.75rem;
+  color: #eafaff;
+  padding: 0.75rem 1rem;
+}
+
+.section-heading-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.clear-button {
+  background: rgba(255, 46, 166, 0.12);
+  border: 1px solid rgba(255, 46, 166, 0.32);
+  box-shadow: none;
+  color: #ffd1f0;
+  font-size: 0.82rem;
+  min-height: 2.2rem;
+  padding: 0.4rem 0.7rem;
+  white-space: nowrap;
+}
+
+.clear-button.confirm {
+  background: rgba(255, 46, 166, 0.3);
+  border-color: rgba(255, 46, 166, 0.55);
+  color: #ffffff;
+}
+
+.clear-button.cancel {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #eadcf5;
+}
+
+.clear-confirm {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: end;
+}
+
+.section-heading .clear-confirm p {
+  color: #ffd1f0;
+  font-size: 0.82rem;
+  margin: 0;
+  text-align: right;
+}
+
+.clear-confirm-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
 @media (max-width: 920px) {
   .notice-panel {
     grid-template-columns: 1fr;

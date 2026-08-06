@@ -88,7 +88,27 @@ It includes UI and server actions for:
 - Listing todos.
 - Marking todos complete/incomplete.
 - Deleting todos.
+- Clearing the whole "지난 주 완료" section at once.
 - Signing out.
+
+## Completed-todo retention decision (2026-08-06)
+
+Checked whether finished todos are cleaned up automatically. They are not.
+Verified directly against the `Hardwork` Supabase project (`ibrejtufoknbacnfeyfw`):
+
+- `pg_cron` is not installed and no `cron` schema exists, so there is no scheduled job.
+- `pg_net` is not installed and there are no Edge Functions.
+- The only database function is `set_updated_at`, which just maintains `updated_at`.
+- `.github/workflows/ci.yml` runs on pull request and push only, with no `schedule` trigger.
+- Nothing had ever been deleted: all rows since the first one were still present.
+
+So the "지난 주 완료" section grows without limit. Note that despite its label, the
+section is not limited to last week — `getSectionKey` puts every completed todo with a
+due date before today into it, so it holds the entire completed history.
+
+Decision: no automatic deletion. The user chose manual cleanup only, so there is
+no background job that can remove data unattended. Do not add a `pg_cron` purge
+job without asking the user again.
 
 ## Important next step
 

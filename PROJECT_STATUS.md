@@ -38,6 +38,28 @@ Before doing any work, think deeply, understand the task, analyze the context, a
   2. What the user should do next.
   3. What not to touch yet.
 
+## Deployment policy
+
+Railway auto-deploys the `main` branch of this repository, so merging to `main`
+is what ships to production. The user set this rule on 2026-08-06:
+
+- In automatic mode, merge and deploy without asking when the change is clean.
+- Otherwise ask before merging to `main`. Ask as well whenever it is unclear
+  which mode is active.
+
+A change counts as clean only when all of these hold:
+
+- `npm run typecheck` and `npm run build` both pass.
+- Any test written for the change passes.
+- No database schema, migration, or Row Level Security change.
+- Nothing deletes or rewrites existing rows.
+- No new environment variable or secret is needed.
+- Nothing changes who can reach the app or its data.
+
+Anything failing that list goes to the feature branch, and the user decides.
+Work always lands on the feature branch first, so an unattended session that
+cannot confirm the mode still leaves the change pushed and ready to merge.
+
 ## Completed so far
 
 ### Supabase project setup

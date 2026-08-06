@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
@@ -9,13 +9,21 @@ type SpeechRecognition = {
   interimResults: boolean;
   lang: string;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
   start: () => void;
+  stop: () => void;
+  abort: () => void;
 };
 
+type SpeechRecognitionResult = ArrayLike<{ transcript: string }> & { isFinal: boolean };
+
 type SpeechRecognitionEvent = {
-  results: ArrayLike<{ 0: { transcript: string } }>;
+  results: ArrayLike<SpeechRecognitionResult>;
+};
+
+type SpeechRecognitionErrorEvent = {
+  error: string;
 };
 
 type SpeechWindow = Window & {
@@ -34,6 +42,9 @@ type ParsedSchedule = {
 };
 
 const dayNames = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+// How long the mic waits through silence before it turns itself off.
+const silenceLimitMs = 5000;
 
 const weekdayPatterns = [
   { day: 0, pattern: /일요일|일욜/g },
@@ -101,6 +112,12 @@ function parseSchedule(transcript: string): ParsedSchedule {
   return { dueDate: toDateInputValue(today), title: normalized, message: "오늘" };
 }
 
+// A restarted recognition session starts a new phrase, so the pieces need a
+// separator of their own instead of being glued together.
+function joinSpeech(...parts: string[]) {
+  return parts.map((part) => part.trim()).filter(Boolean).join(" ");
+}
+
 function formatDateLabel(dateValue: string) {
   const date = new Date(`${dateValue}T00:00:00`);
   return `${date.getMonth() + 1}/${date.getDate()} (${dayNames[date.getDay()]})`;
@@ -112,9 +129,38 @@ export function TodoForm({ action }: TodoFormProps) {
   const [dueDate, setDueDate] = useState(initialDueDate);
   const [voiceMessage, setVoiceMessage] = useState("말하기 버튼으로 ‘금요일에 점심 식사’처럼 추가할 수 있어요.");
   const [isListening, setIsListening] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(silenceLimitMs / 1000);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const keepListeningRef = useRef(false);
+  // Text finalized by earlier recognition sessions. The browser ends a session on
+  // its own during a pause, so we restart it and keep this across restarts.
+  const committedTextRef = useRef("");
+  const sessionTextRef = useRef("");
+  const hadErrorRef = useRef(false);
+  const deadlineRef = useRef(0);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function stopCountdown() {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+  }
+
+  function extendSilenceDeadline() {
+    deadlineRef.current = Date.now() + silenceLimitMs;
+  }
+
+  useEffect(() => {
+    return () => {
+      keepListeningRef.current = false;
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      recognitionRef.current?.abort();
+    };
+  }, []);
 
   function startVoiceInput() {
     const speechWindow = window as SpeechWindow;
@@ -127,29 +173,103 @@ export function TodoForm({ action }: TodoFormProps) {
 
     const recognition = new SpeechRecognition();
     recognition.lang = "ko-KR";
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognitionRef.current = recognition;
+    keepListeningRef.current = true;
+    committedTextRef.current = "";
+    sessionTextRef.current = "";
+    hadErrorRef.current = false;
+    setTitle("");
     setIsListening(true);
-    setVoiceMessage("듣고 있어요. 예: ‘금요일에 점심 식사’처럼 말해 주세요.");
+    setSecondsLeft(silenceLimitMs / 1000);
+    setVoiceMessage("듣고 있어요. 천천히 말해도 괜찮아요.");
+
+    extendSilenceDeadline();
+    stopCountdown();
+    countdownRef.current = setInterval(() => {
+      const remainingMs = deadlineRef.current - Date.now();
+      setSecondsLeft(Math.max(0, Math.ceil(remainingMs / 1000)));
+      if (remainingMs <= 0) {
+        keepListeningRef.current = false;
+        stopCountdown();
+        recognition.stop();
+      }
+    }, 250);
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      const parsed = parseSchedule(transcript);
-      setDueDate(parsed.dueDate);
-      setTitle(parsed.title);
-      setVoiceMessage(`인식됨: ${parsed.message} · ${parsed.title}`);
+      let finalText = "";
+      let interimText = "";
+
+      for (let index = 0; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = result[0]?.transcript ?? "";
+        if (result.isFinal) finalText += transcript;
+        else interimText += transcript;
+      }
+
+      sessionTextRef.current = finalText;
+      setTitle(joinSpeech(committedTextRef.current, finalText, interimText));
+      extendSilenceDeadline();
     };
 
-    recognition.onerror = () => {
-      setVoiceMessage("음성 인식 중 문제가 생겼어요. 다시 눌러서 시도해 주세요.");
-      setIsListening(false);
+    recognition.onerror = (event) => {
+      // The browser reports these while the user is simply pausing, so keep waiting
+      // and let our own silence timer decide when to stop.
+      if (event.error === "no-speech" || event.error === "aborted") return;
+
+      keepListeningRef.current = false;
+      hadErrorRef.current = true;
+      stopCountdown();
+      setVoiceMessage(
+        event.error === "not-allowed" || event.error === "service-not-allowed"
+          ? "마이크 사용이 차단돼 있어요. 브라우저 주소창의 자물쇠 아이콘에서 마이크를 허용해 주세요."
+          : "음성 인식 중 문제가 생겼어요. 다시 눌러서 시도해 주세요.",
+      );
     };
 
     recognition.onend = () => {
+      committedTextRef.current = joinSpeech(committedTextRef.current, sessionTextRef.current);
+      sessionTextRef.current = "";
+
+      if (keepListeningRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // Restart refused, so finish with what we already heard.
+        }
+      }
+
+      stopCountdown();
+      recognitionRef.current = null;
       setIsListening(false);
+      // On a real error the message is already set, so keep it.
+      if (!hadErrorRef.current) finishVoiceInput(committedTextRef.current);
     };
 
     recognition.start();
+  }
+
+  function stopVoiceInput() {
+    keepListeningRef.current = false;
+    stopCountdown();
+    recognitionRef.current?.stop();
+  }
+
+  function finishVoiceInput(transcript: string) {
+    const spoken = transcript.trim();
+
+    if (!spoken) {
+      setVoiceMessage("아무 말도 못 들었어요. 다시 눌러서 말해 주세요.");
+      return;
+    }
+
+    const parsed = parseSchedule(spoken);
+    setDueDate(parsed.dueDate);
+    setTitle(parsed.title);
+    setVoiceMessage(`인식됨: ${parsed.message} · ${parsed.title}`);
   }
 
   function handleSubmit(formData: FormData) {
@@ -165,7 +285,9 @@ export function TodoForm({ action }: TodoFormProps) {
     <form ref={formRef} className="todo-form" action={handleSubmit}>
       <div className="form-title-row">
         <label htmlFor="title">새 할 일</label>
-        <p className="voice-hint">{voiceMessage}</p>
+        <p className="voice-hint">
+          {isListening ? `듣고 있어요. ${secondsLeft}초 더 조용하면 자동으로 꺼져요.` : voiceMessage}
+        </p>
       </div>
 
       <div className="inline-form-row enhanced">
@@ -185,8 +307,12 @@ export function TodoForm({ action }: TodoFormProps) {
           onChange={(event) => setTitle(event.target.value)}
         />
 
-        <button className="voice-button" type="button" onClick={startVoiceInput} disabled={isListening}>
-          {isListening ? "듣는 중" : "말하기"}
+        <button
+          className={isListening ? "voice-button listening" : "voice-button"}
+          type="button"
+          onClick={isListening ? stopVoiceInput : startVoiceInput}
+        >
+          {isListening ? "그만 듣기" : "말하기"}
         </button>
 
         <button type="submit" disabled={isPending}>{isPending ? "추가 중" : "추가"}</button>
